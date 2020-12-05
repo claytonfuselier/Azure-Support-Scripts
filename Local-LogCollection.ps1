@@ -1,7 +1,7 @@
 <#
 .SYNOPSIS
 	Emulates log collection for Windows VMs available during Azure support.
-	Particularly useful for providing logs to an Azure Support Engineer if a VM's disk is encrypted and preventing log collection by a support engineer.
+	Particularly useful for providing logs to if your VM's disk is encrypted and preventing log collection by a support engineer.
 
 .DESCRIPTION
 	The script can be run directly on the "Broken" VM if it is accessible, or it can be run on a "Rescue" VM with the Broken VM's OS disk
