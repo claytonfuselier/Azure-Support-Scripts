@@ -26,36 +26,6 @@
 #>
 
 
-### Change Log ###
-<#
-v1.0
-	2018-10-18
-
-		Initially created
-v1.0.1
-	2018-10-19
-		Code minimization
-v1.0.2
-	2018-10-26
-		Added code for checking if the source drive is the active system drive or a data drive.
-		Added code for pulling basic disk details (free/used), but currently only functions if run directly on the Broken VM and not on a Rescue VM
-		Added Write-Verbose lines to facilitate use of '-Verbose', for troubleshooting purposes.
-		Added the above synopsis, description, variable explanations, notes, etc.
-		Added proper parameter handling (see 'param' block below changelog)
-v2.0
-	2018-11-01
-		Complete and total revamp of the methodology for copying the target files. As a result, was able to trim the script by roughly 1000 lines!
-v2.0.1
-	2020-12-05
-		Added PII warning and prompt to continue or stop.
-v2.0.2
-	2020-12-05
-		Corrected some incorrect syntax.
-		Corrected some inconsistent formatting in messaging.
-		Cleaned up "Write-Verbose" lines to make it easier to visually scan the output and removed excessive "noise"
-#>
-
-
 param(
     [Parameter(mandatory=$true)]
     [String]$DriveLetter,
@@ -77,7 +47,7 @@ if (-not $ShowErrors) {
 ### Privacy Warning
 Write-Host -ForegroundColor Red -BackgroundColor Black {
     "Warning! This script lacks any and all PII scanning capability. If there
-    is any senesitive information within your logs (Azure Subscription ID etc.)
+    is any sensitive information within your logs (Azure Subscription ID etc.)
     it will NOT be scrubbed or redacted. Sharing the resulting zip file comes
     at your own risk."
 }
