@@ -48,6 +48,11 @@ v2.0
 v2.0.1
 	2020-12-05
 		Added PII warning and prompt to continue or stop.
+v2.0.2
+	2020-12-05
+		Corrected some incorrect syntax.
+		Corrected some inconsistent formatting in messaging.
+		Cleaned up "Write-Verbose" lines to make it easier to visually scan the output and removed excessive "noise"
 #>
 
 
@@ -92,7 +97,7 @@ $DriveLetter = $DriveLetter.ToLower()
 $drvpath = $DriveLetter+":\"
 $drvtest = Test-Path -Path $drvpath
 if(-not ($drvtest)){
-    Write-Output -ForegroundColor Red -BackgroundColor Black "The drive ($drvpath) does not exist! Sript execution will now stop."
+    Write-Host -ForegroundColor Red -BackgroundColor Black "The drive ($drvpath) does not exist! Script execution will now stop."
     exit
 }
 Write-Verbose "INFO: Source drive is $DriveLetter"
@@ -116,8 +121,10 @@ $file = $pcname.Value+"_LogCollection_$datetime"
 $DeviceFolder = "$env:USERPROFILE\Desktop\$file\device_0"
 New-Item -ItemType Directory -Path $DeviceFolder | Out-Null
 if(-not (Test-Path -Path $DeviceFolder)){
-    Write-Output -ForegroundColor Red -BackgroundColor Black "The destination path ($DeviceFolder) could not be created! Try running the script as Administrator. Sript execution will now stop."
+    Write-Host -ForegroundColor Red -BackgroundColor Black "The destination path ($DeviceFolder) could not be created! Try running the script as Administrator. Sript execution will now stop."
     exit
+}else{
+	Write-Verbose "INFO: Created primary destination folder created at $DeviceFolder."
 }
 
 
@@ -128,6 +135,7 @@ Start-Transcript -Path $DeviceFolder\..\results.txt | Write-Verbose
 ### Copy/Export Registry
 $dest = "$DeviceFolder\Windows\System32\config"
 New-Item -ItemType Directory -Path $dest | Out-Null
+Write-Verbose "INFO: Created destination folder for Registry at $dest."
 
 Write-Verbose "Copying SOFTWARE Registry Hive"
 if($localsys){
@@ -143,7 +151,7 @@ if($localsys){
     Copy-Item -Path $DriveLetter":\Windows\System32\config\SYSTEM" -Destination $dest
 }
 
-
+Write-Verbose "INFO: Creating array of logs to collect..."
 ### Event Viewer Logs
 $logs = @()
 $logs += $DriveLetter+":\Windows\System32\winevt\Logs\System.evtx"
@@ -326,17 +334,12 @@ $logs += $DriveLetter+":\WindowsAzure\Logs\Plugins\Microsoft.Azure.NetworkWatche
 $logs += $DriveLetter+":\WindowsAzure\Logs\Plugins\Microsoft.ManagedIdentity.ManagedIdentityExtensionForWindows\*\RuntimeSettings\*.xml"
 $logs += $DriveLetter+":\WindowsAzure\GuestAgent*\CommonAgentConfig.config"
 $logs += $DriveLetter+":\WindowsAzure\Logs\Plugins\Microsoft.Compute.CustomScriptExtension\*\*.log"
-
+Write-Verbose "INFO: Array created."
 
 ### Copying Logs
 $logs | ForEach-Object{
-    Write-Verbose "Target $_"
     if(Test-Path -Path $_){
         $items = Get-Item -Path $_
-
-        if($items.Count -gt 1){
-            Write-Verbose "INFO: There are"$items.Count"matching files."
-        }
 
         $items | ForEach-Object{
             $dir = $_.Directory.FullName.Split('\')
@@ -349,10 +352,10 @@ $logs | ForEach-Object{
 
             New-Item -ItemType Directory -Path $dest | Out-Null
             Copy-Item -Path $_ -Destination $dest -Force
-            Write-Verbose "SUCCESS: Copied $_"
+            Write-Verbose "Copied $_"
         }
     }else{
-        Write-Verbose "ERROR: File does not exist:"
+        Write-Verbose "File does not exist. Skipping $_"
     }
 }
 
@@ -363,10 +366,10 @@ if($localsys){
     $diskinfo = get-WmiObject win32_logicaldisk
     $diskinfo > "$DeviceFolder\..\diskinfo.txt"
 }else{
-    Write-Verbose "ERROR: $drvpath is not the active system. Skipping diskinfo.txt"
+    Write-Verbose "INFO: $drvpath is not the active system. Skipping diskinfo.txt"
 }
 
-Write-Verbose "Log/File collection complete."
+Write-Verbose "Log collection complete."
 
 
 ### Stop Logging
@@ -374,11 +377,12 @@ Stop-Transcript | Write-Verbose
 
 
 ### Wait to allow files to close
+Write-Verbose "INFO: Waiting 5 seconds for open handles to close..."
 Start-Sleep -Seconds 5
 
 
 ### Zip Contents
-Write-Verbose "Adding to archive $file.zip"
+Write-Verbose "Creating archive $file.zip"
 Compress-Archive -Path $DeviceFolder\.. -DestinationPath "$DeviceFolder\..\..\$file.zip" -CompressionLevel Optimal
 
 
