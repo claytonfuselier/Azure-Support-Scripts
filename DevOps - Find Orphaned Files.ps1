@@ -67,13 +67,11 @@ $nonpages | ForEach-Object {
         }
 
         # Estimated Time Left Calculation
-        if ($p -gt 0){
+        if ($cnt -gt 0){
             $now = Get-Date
             $avg = ($now – $starttime).TotalMilliseconds/$cnt
             $msleft = (($totalchks–$cnt)*$avg)
             $time = New-TimeSpan –Seconds ($msleft/1000)
-            #$estcomp = $now + $span
-            #$esttext = $estcomp.ToString()
         }
 
         # Progress bar
@@ -102,19 +100,20 @@ if($orphans.Count -ge 1){
 if($relocate -eq 1){
     
     # Testing for and creating home for orphaned files (if needed)
-    $orphange = "$gitfolder\.OrphanedFiles"
+    $orphange = "$gitroot\.OrphanedFiles"
     if (-not (Test-Path $orphange)){
         New-Item -Path $orphange -ItemType Directory | Out-Null
     }
 
     # Looping through $orphans array to relocate each one
-    $p = 0
+    $cnt = 0
     $orphans | ForEach-Object {
         Move-Item -Path $_.FullName -Destination $orphange
         
         # Progress bar
-        $p++
-        $pcomplete = ($p/$orphans.Count)*100
-        Write-Progress -Activity "Relocating orphaned files" -Status "$p of $($orphans.Count) total moves" -PercentComplete $pcomplete
+        $cnt++
+        $percent = ($cnt/$orphans.Count)*100
+        Write-Progress -Activity "Relocating Orphaned Files" -Status "$cnt of $($orphans.Count) total moves" -PercentComplete $percent
     }
+    Write-Host -ForegroundColor Cyan "Relocated orphaned files to $orphange"
 }
