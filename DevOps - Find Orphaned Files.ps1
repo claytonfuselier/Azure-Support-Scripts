@@ -46,8 +46,10 @@ Write-Host -ForegroundColor Yellow "Number of non-page files: $($nonpages.Count)
 
 ### Declarations
 $orphans = @()
+$cnt = 0
+$est = ""
 $totalchks = $pages.Count * $nonpages.Count
-$p = 0
+$starttime = Get-Date 
 
 
 ### Searching for each nonpage filename inside each page
@@ -58,15 +60,26 @@ $nonpages | ForEach-Object {
     
     # Looping through each page to look for the nonpage's filename
     $pages | ForEach-Object{
+        
         $pagecontent = Get-Content $_.PSPath
         if($pagecontent -match $curfile.Name) {
             $refcount++
         }
 
+        # Estimated Time Left Calculation
+        if ($p -gt 0){
+            $now = Get-Date
+            $avg = ($now – $starttime).TotalMilliseconds/$cnt
+            $msleft = (($totalchks–$cnt)*$avg)
+            $time = New-TimeSpan –Seconds ($msleft/1000)
+            #$estcomp = $now + $span
+            #$esttext = $estcomp.ToString()
+        }
+
         # Progress bar
-        $p++
-        $pcomplete = ($p/$totalchks)*100
-        Write-Progress -Activity "Checking for orphaned files" -Status "$p of $totalchks total searches" -PercentComplete $pcomplete
+        $cnt++
+        $percent = [MATH]::Round(($cnt/$totalchks)*100,2)
+        Write-Progress -Activity "Checking for Orphaned Files ($percent %)" -Status "$cnt of $totalchks total searches - $time" -PercentComplete $percent
     }
 
     if($refcount -eq 0){
