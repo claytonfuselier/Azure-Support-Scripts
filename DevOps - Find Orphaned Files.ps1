@@ -11,22 +11,37 @@
 # - Also ignores any files with ".git" in the name (e.g. ".gitignore")
 
 
+
 ### Variables
 $relocate = 0    # 0=Leave Files, 1=Move Files to \.OrphanedFiles -> Read notes above for more info.
 $gitroot = ""
 
 
+
+####################### Begin Script #######################
+### Simple Error Checking
+if(-not $gitroot){
+    Write-Host -ForegroundColor Red -BackgroundColor Black "The variable 'gitroot' is not defined.`nScript execution will now stop."
+    exit
+}
+if(-not (Test-Path $gitroot)){
+    Write-Host -ForegroundColor Red -BackgroundColor Black "The path '$gitroot' is not valid.`nScript execution will now stop."
+    exit
+}
+
+
 ### Enumertating files
+Write-Host -ForegroundColor Cyan "Scanning folder root $gitroot"
 $allfiles = Get-ChildItem -Path $gitroot -Recurse
-Write-Host -ForegroundColor Yellow "Total number of files: $($allfiles.Count)"
+Write-Host -ForegroundColor Yellow "Total number of files/folders: $($allfiles.Count)"
 
 # Filtering to ".md" extension and non-directories only
 $pages = $allfiles | where {$_.Extension -eq ".md" -and $_.Attributes -ne "Directory" -and $_.Name -notmatch ".git"}
-Write-Host -ForegroundColor Yellow "Number of Markdown Files: $($pages.Count)"
+Write-Host -ForegroundColor Yellow "Number of pages: $($pages.Count)"
 
 # Filtering to extensions other than ".md" and non-directories only
 $nonpages = $allfiles | where {$_.Extension -ne ".md" -and $_.Attributes -ne "Directory" -and $_.Name -notmatch ".git"}
-Write-Host -ForegroundColor Yellow "Number of Non-Markdown Files: $($nonpages.Count)"
+Write-Host -ForegroundColor Yellow "Number of non-page files: $($nonpages.Count)"
 
 
 ### Declarations
@@ -61,8 +76,12 @@ $nonpages | ForEach-Object {
 
 
 ### Exporting orphaned files to CSV
-Write-Host -ForegroundColor Cyan "Total number of Orphaned Files: $($orphans.Count)"
-$orphans | select Directory, Name, Extension, FullName | Export-Csv .\OrphanedFiles.csv -NoTypeInformation
+Write-Host -ForegroundColor Yellow "Total number of Orphaned Files: $($orphans.Count)"
+if($orphans.Count -ge 1){
+    $shellpath = (Get-Location).Path
+    Write-Host -ForegroundColor Cyan "Exported list to $shellpath\OrphanedFiles.csv"
+    $orphans | select Directory, Name, Extension, FullName | Export-Csv .\OrphanedFiles.csv -NoTypeInformation
+}
 
 
 ### Relocate orphaned files
